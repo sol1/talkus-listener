@@ -1,0 +1,12 @@
+[Unit]
+Description=http listener used to serve messages from talkus to the specified email, used for our live support.
+
+[Service]
+PIDFile=/tmp/talkusListener.pid-4040
+User=root
+Group=root
+WorkingDirectory=/home/user/
+ExecStart=/bin/bash -c '/home/user/talkus-listener -emailRecipient support@example.com -emailSender no-reply@example.com -emailServer mail.example.com'
+
+[Install]
+WantedBy=multi-user.target

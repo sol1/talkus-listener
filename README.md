@@ -8,6 +8,7 @@ Build with `go build`
 Example usage:
 `./talkus-listener --emailRecipient recieving@example.com --emailSender sending@example.com --emailServer mail.example.com`
 
-### TODO
-
-* Init scripts
+To run on startup (Requires systemd):
+* `mv talkus-listener /etc/systemd/system/`
+* `systemctl enable talkus-listener.service`
+* `systemctl start talkus-listener.service`
