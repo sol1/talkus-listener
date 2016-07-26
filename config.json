@@ -1,0 +1,14 @@
+{
+    "Email":{
+        	"Server":    "mail.example.com",
+        	"Sender":    "no-reply@example.com",
+        	"Password":  "mypassword",
+        	"Recipient": "support@example.com"
+    },
+    "RT": {
+        	"URL":      "http://www.example.com",
+        	"Username": "JohnDoe",
+        	"Password": "mypassword",
+        	"Queue":    "Live chat"
+    }
+}
