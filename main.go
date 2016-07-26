@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -10,6 +9,8 @@ import (
 	"net/smtp"
 	"os"
 	"time"
+
+	"github.com/LunaNode/rtgo"
 )
 
 //store configuration data containing user details
@@ -34,6 +35,7 @@ type rtConfig struct {
 
 var configFileName string
 var config configuration
+var rtConn *rtgo.RT
 
 //initialize application flags, load user details from config file.
 func init() {
@@ -50,9 +52,6 @@ func init() {
 	if err != nil {
 		fmt.Println("Error decoding config file:", err)
 	}
-
-	//myRT := rtgo.NewRT("URL", "username", "password")
-	// myRT.CreateTicket("Queue", "requestor", subject, text)
 }
 
 //Main runs http server if appropriate flags specified
@@ -60,13 +59,10 @@ func main() {
 	if config.Email.Server == "" && config.RT.URL == "" {
 		fmt.Println("Looks like your configuration file is incomplete.")
 		fmt.Println("At least Email server or RT URL MUST be supplied.")
+	} else {
+		http.HandleFunc("/transcript", handler)
+		http.ListenAndServe(":8080", nil)
 	}
-	// if emailServer == "" || emailSender == "" || emailRecipient == "" {
-	// 	fmt.Println("emailServer, emailSender and emailRecipient required. Run with --help for info.")
-	// } else {
-	// 	http.HandleFunc("/transcript", handler)
-	// 	http.ListenAndServe(":8080", nil)
-	// }
 }
 
 //Stores message data, includes requried JSON tags
@@ -109,30 +105,29 @@ func (t transcript) toString() string {
 
 //Handles incoming requests under the /transcript path
 func handler(w http.ResponseWriter, r *http.Request) {
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(r.Body)
-	s := buf.String()
+	var t []transcript
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&t)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
 
-	fmt.Println(s)
-
-	// var t []transcript
-	// dec := json.NewDecoder(r.Body)
-	// err := dec.Decode(&t)
-	// if err != nil {
-	// 	fmt.Println("error:", err)
-	// }
-	//
-	// //Loop through objects, if message is present email the transcript
-	// for _, i := range t {
-	// 	if i.Message != "" {
-	// 		sendEmail(
-	// 			config.Email.Server,
-	// 			config.Email.Sender,
-	// 			config.Email.Password,
-	// 			config.Email.Recipient, i)
-	// 		fmt.Println(i.toString())
-	// 	}
-	// }
+	//Loop through objects, if message is present email/RT the transcript
+	for _, i := range t {
+		if i.Message != "" {
+			if config.Email.Server != "" {
+				sendEmail(
+					config.Email.Server,
+					config.Email.Sender,
+					config.Email.Password,
+					config.Email.Recipient, i)
+				fmt.Println(i.toString())
+			} else {
+				rtConn = rtgo.NewRT(config.RT.URL, config.RT.Username, config.RT.Password)
+				rtConn.CreateTicket("support", "requestor@example.com", "Example subject", "Example content text")
+			}
+		}
+	}
 }
 
 //Send message to email
