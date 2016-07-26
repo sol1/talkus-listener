@@ -1,12 +1,15 @@
 # talkus-listener
 An http webhook listener for talkus.io chat transcripts.
-Accepts JSON posted by talkus and emails the transcript to your chosen email address.
+Accepts JSON posted by talkus and emails the transcript to your chosen email address or RT server.
 Support both authenticated and un-authenticated email.
 
-Build with `go build`
+Build with:
+* `go get github.com/LunaNode/rtgo`
+* `go build`
 
 Example usage:
-`./talkus-listener -config configEmail.json`
+* `./talkus-listener -config configEmail.json`
+
 
 To run on startup (Requires systemd):
 * `mv talkus-listener /etc/systemd/system/`
