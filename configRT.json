@@ -1,0 +1,8 @@
+{
+    "RT": {
+        "URL": "http://www.example.com",
+        "Username": "JohnDoe",
+        "Password": "mypassword",
+        "Queue": "Live chat"
+    }
+}

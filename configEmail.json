@@ -1,0 +1,8 @@
+{
+    "Email": {
+        "Server": "mail.example.com",
+        "Sender": "no-reply@example.com",
+        "Password": "mypassword",
+        "Recipient": "support@example.com"
+    }
+}

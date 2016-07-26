@@ -1,36 +1,72 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"net/smtp"
+	"os"
 	"time"
 )
 
-var emailServer string
-var emailSender string
-var emailPassword string
-var emailRecipient string
+//store configuration data containing user details
+type configuration struct {
+	Email emailConfig
+	RT    rtConfig
+}
 
-//initialize application flags
+type emailConfig struct {
+	Server    string
+	Sender    string
+	Password  string
+	Recipient string
+}
+
+type rtConfig struct {
+	URL      string
+	Username string
+	Password string
+	Queue    string
+}
+
+var configFileName string
+var config configuration
+
+//initialize application flags, load user details from config file.
 func init() {
-	flag.StringVar(&emailServer, "emailServer", "", "SMTP server used to send mail from, requires associated username and password")
-	flag.StringVar(&emailRecipient, "emailRecipient", "", "Email address used to recieve the transcript")
-	flag.StringVar(&emailSender, "emailSender", "", "Email address used to send tickets.")
-	flag.StringVar(&emailPassword, "emailPassword", "", "(OPTIONAL) Password associated with the sending email address. If none supplied there will be no authentication")
+	flag.StringVar(&configFileName, "config", "config.json", "Path to config file.")
 	flag.Parse()
+
+	f, err := os.Open(configFileName)
+	if err != nil {
+		log.Fatal("Error loading config file: ", err)
+	}
+
+	dec := json.NewDecoder(f)
+	err = dec.Decode(&config)
+	if err != nil {
+		fmt.Println("Error decoding config file:", err)
+	}
+
+	//myRT := rtgo.NewRT("URL", "username", "password")
+	// myRT.CreateTicket("Queue", "requestor", subject, text)
 }
 
 //Main runs http server if appropriate flags specified
 func main() {
-	if emailServer == "" || emailSender == "" || emailRecipient == "" {
-		fmt.Println("emailServer, emailSender and emailRecipient required. Run with --help for info.")
-	} else {
-		http.HandleFunc("/transcript", handler)
-		http.ListenAndServe(":8080", nil)
+	if config.Email.Server == "" && config.RT.URL == "" {
+		fmt.Println("Looks like your configuration file is incomplete.")
+		fmt.Println("At least Email server or RT URL MUST be supplied.")
 	}
+	// if emailServer == "" || emailSender == "" || emailRecipient == "" {
+	// 	fmt.Println("emailServer, emailSender and emailRecipient required. Run with --help for info.")
+	// } else {
+	// 	http.HandleFunc("/transcript", handler)
+	// 	http.ListenAndServe(":8080", nil)
+	// }
 }
 
 //Stores message data, includes requried JSON tags
@@ -50,6 +86,8 @@ type identity struct {
 	Title     string `json:"title"`
 	IP        string `json:"ip"`
 	Languages string `json:"languages"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
 }
 
 //Gets transcript data in a readable format
@@ -71,20 +109,30 @@ func (t transcript) toString() string {
 
 //Handles incoming requests under the /transcript path
 func handler(w http.ResponseWriter, r *http.Request) {
-	var t []transcript
-	dec := json.NewDecoder(r.Body)
-	err := dec.Decode(&t)
-	if err != nil {
-		fmt.Println("error:", err)
-	}
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(r.Body)
+	s := buf.String()
 
-	//Loop through objects, if message is present email the transcript
-	for _, i := range t {
-		if i.Message != "" {
-			sendEmail(emailServer, emailSender, emailPassword, emailRecipient, i)
-			fmt.Println(i.toString())
-		}
-	}
+	fmt.Println(s)
+
+	// var t []transcript
+	// dec := json.NewDecoder(r.Body)
+	// err := dec.Decode(&t)
+	// if err != nil {
+	// 	fmt.Println("error:", err)
+	// }
+	//
+	// //Loop through objects, if message is present email the transcript
+	// for _, i := range t {
+	// 	if i.Message != "" {
+	// 		sendEmail(
+	// 			config.Email.Server,
+	// 			config.Email.Sender,
+	// 			config.Email.Password,
+	// 			config.Email.Recipient, i)
+	// 		fmt.Println(i.toString())
+	// 	}
+	// }
 }
 
 //Send message to email

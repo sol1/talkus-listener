@@ -6,7 +6,7 @@ Support both authenticated and un-authenticated email.
 Build with `go build`
 
 Example usage:
-`./talkus-listener --emailRecipient recieving@example.com --emailSender sending@example.com --emailServer mail.example.com`
+`./talkus-listener -config configEmail.json`
 
 To run on startup (Requires systemd):
 * `mv talkus-listener /etc/systemd/system/`
